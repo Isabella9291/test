@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#261b14">
+  <title>The Sheep — An enchanted field journal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="stage" aria-label="古老故事书里的互动羊群"></main>
+  <div id="loading">Preparing a little wonder…</div>
+  <nav id="controls" aria-label="故事书操作">
+    <button id="open-button">打开故事书 · Open</button>
+    <button id="flock-button" hidden>← 新的羊群</button>
+    <button id="season-button" hidden>下一季节 →</button>
+    <button id="night-button" hidden>昼 / 夜</button>
+    <button id="music-button">♫ 播放</button>
+    <button id="track-button" title="切换下一首原创旋律">换曲</button>
+    <button id="help-button" aria-expanded="false">操作说明 ?</button>
+  </nav>
+  <aside id="help" hidden>
+    <h1>The Sheep <span>一本会呼吸的故事书</span></h1>
+    <p>点书扣打开 · 左下页角刷新羊群 · 右下页角切换四季</p>
+    <p>长按至小羊蓬起，松手让它化为一朵云，小羊会从草地消失。</p>
+    <p>云可以拖动，松开后继续随风漂浮。有些云会下雨，让新的小羊慢慢出现。</p>
+    <p>在草地空白处上下拖动调节昼夜；白天环绕移动鼠标改变投影方向。</p>
+    <p>点录音带播放 / 暂停，点旁边的小箭头换曲。夜晚羊群跳舞，白天狼影与羊玩追逐。</p>
+    <p class="small">键盘：Enter 打开 · ← 新羊群 · → 下一季节 · N 昼夜 · M 音乐 · T 换曲 · H 说明。昼夜也会随时间缓缓流转。</p>
+  </aside>
+  <div id="announcement" role="status" aria-live="polite"></div>
+  <script src="vendor/p5.min.js"></script>
+  <script src="js/book-scene.js"></script>
+  <script src="js/flock.js"></script>
+  <script src="js/perlin-mechanic.js"></script>
+  <script src="js/time-mechanic.js"></script>
+  <script src="js/input-controls.js"></script>
+  <script src="js/music-box.js"></script>
+  <script src="js/sketch.js"></script>
+</body>
+</html>
