@@ -1,8 +1,3 @@
-/* Main p5.js setup/draw integration.
- * Organised with ChatGPT/Codex assistance. See README and docs/OWNERSHIP.md. */
-
-
-// ── sketch.js ──
 /* Integration only: each mechanic lives in its own script.
  * Project code created with ChatGPT assistance; see README for scope and sources.
  * p5.js global mode reference: https://p5js.org/ */
@@ -38,4 +33,4 @@ function draw() {
   } else Book.cover();
   pop(); Book.finish(); pop();
 }
-function windowResized() { const dimensions = fitScene(); resizeCanvas(...dimensions); Input.cancel(); Input.layoutCassetteControls(); }
+function windowResized() { const dimensions = fitScene(); resizeCanvas(...dimensions); Input.cancel(); }

@@ -1,68 +1,61 @@
-# 按三位成员分工的 p5.js 文件说明
+# 三位成员的代码分工与协作边界
 
-所有作品脚本都在项目根目录，与参考目录保持一致；直接通过 `index.html` 的 `<script>` 加载，不需要框架或打包器。
+## 1. Time-based：时间负责人（姓名待填）
 
-## Time-based — `time-based.js`
+编辑 `js/mechanics/time/time-mechanic.js`。负责 `TimeMechanic.open/turn/toggleNight/update`：累计秒数、开书进度、翻页中点切换事件、书页渐显、春夏秋冬过渡、120 秒自动昼夜、手动昼夜的覆盖期。
 
-负责人：真实姓名待填。
+调参位置：`js/shared/config.js` 中 `time`。`Story` 的状态定义在 `js/shared/state.js`，绘制层读取这些进度显示画面。用户点击由 Input 接收，再请求时间模块开始动画；按钮属于 User input，动画何时结束属于 Time。
 
-- 对象：`TimeMechanic`。
-- `open()`：开始开书；`turn(kind)`：开始翻页；`setNight/toggleNight()`：改变昼夜目标。
-- `update(dt)`：推进秒数、封皮打开、书页渐显、翻页中点事件、春夏秋冬过渡、120 秒昼夜周期与手动覆盖期。
-- 时间参数来自 `settings.js` 的 `ProjectConfig.time`，状态存放在 `Story`。
-- 不绘制羊或草地，也不处理鼠标事件。输入成员请求动画，绘制层读取动画进度。
+建议验证：开书封皮始终存在；落平后画面浮现；右翻页四季完整循环；不操作时昼夜仍随时间改变；不同帧率下动画时长一致。
 
-验证重点：开书期间封皮存在；落平后内容浮现；四季能完整循环；没有输入时昼夜仍推进；动画时长不依赖帧率。
+## 2. Perlin noise and randomness：你的部分（姓名待填）
 
-## Perlin noise and randomness — `noise-random.js`
-
-负责人：你，真实姓名待填。
-
-本文件含两个有明确注释分区的对象：
-
-1. **`Flock` 的数据与行为**：`create/findSpace/addAt/update` 管理羊的随机属性、尺寸、眼色、狼影、合法放置、避让、随机追逐参数、影子缓动和羊毛膨胀。
-2. **`NoiseMechanic`**：`rand/range` 是独立种子随机序列；`newFlock` 刷新羊群；`releaseSheep/addCloud` 管理羊消失并变云；`update` 推进升空、Perlin 漂移、随机寿命、雨云选择、新羊成长和粒子回收。
-
-羊、云和狼怎么画，位于共享 `renderer.js`；不要把绘制代码复制进个人机制。`Flock` 和 `NoiseMechanic` 的命中方法由 `user-input.js` 安装，输入与绘制共享同一份实体数据。
-
-跨模块边界：长按多久由 User input 记录，是否允许变云及实体移除/生成由这里处理。云虽然使用 `dt`，但随机生命周期仍属于本机制。音乐只是布尔开关，不分析节拍。
-
-验证重点：同种子复现、翻页刷新、噪声连续、拖动后继续漂移、变云起点连续、雨云生羊与消散同步、避免在天空/树/留声机上生成、云与粒子能回收。
-
-## User input — `user-input.js`
-
-负责人：真实姓名待填。
-
-文件分为三段：
-
-- **命中判断**：向 `Flock/NoiseMechanic` 安装 `hit()`，选择指针下的羊或云。
-- **`Input` 手势与界面**：点击、长按、拖云、空白草地添羊、上下拖动昼夜、按钮、帮助面板、手势取消与录音带按钮定位。
-- **p5 事件**：鼠标、触屏和键盘回调，按画布尺寸转换坐标，再请求对应机制。
-
-输入层调用 `TimeMechanic` 开始时间动画，调用 `NoiseMechanic.releaseSheep` 变云，调用 `Flock.addAt` 添羊，调用 `MusicBox` 播放音乐，不重复实现其内部逻辑。
-
-验证重点：点击和拖动互斥；长按只变云一次；无效位置不生羊；录音带按钮在开书前后及缩放后都可见、可点击；键盘和触屏可用。
-
-## 共同维护的文件
-
-| 文件 | 内容 |
+| 文件 | 需要掌握的内容 |
 | --- | --- |
-| `renderer.js` | `Book`、`PaintedDesk`、`WoolPainter`，以及附加到 `Flock/NoiseMechanic` 的绘制方法；负责封皮、纸页、桌面摆件、草坡、树、羊、完整狼、云、雨线和粒子外观 |
-| `settings.js` | `ProjectConfig` 参数、`Story` 状态、`SceneGeometry` 地形、`CassetteGeometry` 录音带坐标与按钮区域 |
-| `music.js` | `MusicBox` 的三段原创旋律、播放/暂停/下一首与音频节点；不是第四种 Audio mechanic |
-| `sketch.js` | `setup/draw/windowResized`，初始化、模块更新顺序、画布缩放和整合 |
-| `index.html` / `style.css` | 页面入口、加载顺序、按钮、帮助面板和响应式样式 |
-| `vendor/` | p5.js 与许可证，不是个人机制，不手改库代码 |
-| `scripts/` / `tests/` | 开发工具和检查，不参与作品运行 |
-| `docs/` / `README.md` | 职责、灵感、操作、AI 与出处声明、试验恢复说明 |
-| `preview.html` | 自动生成的单文件体验版；不在这里分工编辑，应修改根目录源文件后重新生成 |
+| `js/mechanics/noise-random/perlin-mechanic.js` | `rand/range` 独立种子、`newFlock`、`addCloud`、`releaseSheep`、`update`；噪声速度、升空、随机寿命/降雨、生羊与消散粒子 |
+| `js/mechanics/noise-random/flock-model.js` | `create/findSpace/addAt/update`；个体随机属性、尺寸/狼影/眼色、树木与天空与间距限制、音乐开关下的追逐、影子缓动、羊毛膨胀 |
 
-## 加载与一次交互的协作
+Noise 模块决定实体的数据和行为，不负责画每一笔。它调用 `Flock.create/findSpace` 生成随机且有效的位置。`releaseSheep` 在长按达标时移除原羊并生成云。云由缓动升空进入 Perlin 漂移，最后四秒共享一个进度控制云消失与新羊长大。每帧使用的是连续噪声；个体外观参数只在创建时随机一次。
 
-`p5.js → settings.js → noise-random.js → time-based.js → renderer.js → user-input.js → music.js → sketch.js`。
+音乐只是布尔开关。追逐半径、速度、相位、眼色和跳跃参数来自随机个体属性；画面模块只读这些参数绘制。云也需要 `dt` 和秒数，但它的随机生命周期属于这套噪声/随机机制，不因使用时间就变成第四种机制。
 
-- **翻页**：Input 识别页角 → Time 推进动画 → 中点切换季节或请求 Noise 刷新羊群 → Renderer 显示内容。
-- **变云**：Input 累计长按并松手 → Noise 检查阈值、移除羊、生成云并持续更新 → Renderer 呈现变化。
-- **音乐追逐**：Input 点击录音带 → MusicBox 改变状态 → Flock 更新轨迹 → Renderer 绘制四足狼。
+建议验证：相同种子可复现；翻页改变布局；云漂移连续；拖云松开后继续漂；羊变云位置和大小连续；降雨处出现新羊且进度同步；长期运行能回收云和粒子。
 
-共享绘制中的步态、闪烁和材质会读取时间或噪声，但不替代三位成员的机制实现。成员需要理解接口并自己完成设计与修改，不能用文件拆分冒充每人三次真实贡献。
+## 3. User input：交互负责人（姓名待填）
+
+| 文件 | 需要掌握的内容 |
+| --- | --- |
+| `js/mechanics/user-input/input-controls.js` | 手势状态、短按/长按、拖云、空白点击添羊、空白拖动昼夜、按钮、说明面板与取消操作 |
+| `js/mechanics/user-input/p5-events.js` | p5 鼠标、键盘和触屏回调；将画布像素转换成场景坐标 |
+| `js/mechanics/user-input/hit-testing.js` | 按位置判断指针命中了哪只羊或哪朵云 |
+
+交互层发出请求：翻页交给 Time，变云交给 `NoiseMechanic.releaseSheep`，添羊交给 `Flock.addAt`，音乐交给 `MusicBox`。它记录长按多久，但不直接复制随机生成或云生命周期代码。
+
+建议验证：点击草地与拖动昼夜互斥；点击树木与天空不生羊；按住再松开只变一次云；窗口缩放后命中位置正确；取消手势不会留下持续长按状态；触屏、键盘与鼠标都可使用。
+
+## 4. 三位成员共享的部分
+
+| 分类 | 文件 | 职责 |
+| --- | --- | --- |
+| 主程序 | `js/sketch.js` | setup/draw、每帧更新顺序、书本缩放、窗口 resize；整合机制 |
+| 公共参数/状态 | `js/shared/config.js`, `state.js`, `scene-geometry.js` | 时间参数、长按阈值、数量上限、全局 Story 状态和共享草坡、树木与摆件几何 |
+| 书本与环境绘制 | `js/rendering/book-scene.js`, `painted-desk.js` | 绿色草地、树木与天空、季节色彩、封皮与纸页、CG 桌面摆件 |
+| 羊和狼绘制 | `js/rendering/flock-renderer.js`, `wool-painter.js` | 体积羊毛、羊的脸和腿、狼影、完整四足狼、绘制排序 |
+| 云与粒子绘制 | `js/rendering/cloud-renderer.js` | 云体积、雨线和消散星点；实体是否下雨由 Noise 决定 |
+| 音频支持 | `js/audio/music-box.js` | 合成三首固定旋律、切歌、播放状态；没有节拍/频谱分析 |
+| 页面/UI | `index.html`, `style.css` | 加载顺序、按钮、说明、响应式样式 |
+| 依赖 | `vendor/` | 本地 p5.js 与许可证，不应手改库代码 |
+| 开发工具 | `scripts/`, `tests/`, `package*.json` | 构建单文件、浏览器检查及开发依赖 |
+| 文档/截图 | `README.md`, `docs/` | 灵感、操作、AI/来源声明、职责、当前效果 |
+| 生成文件 | `preview.html` | 便于直接打开；修改源文件后重新生成，不在这里分头开发 |
+
+共享绘制层中使用 `Story.elapsed` 来画步态、雪花或闪烁，不代表它负责全局时间推进；在画笔中使用噪声来形成静态材质，也不代替成员的互动 Perlin 风场。
+
+## 5. 一次操作跨模块的流程
+
+- **翻页：** User input 识别页角 → Time 推进翻页 → 中点触发 Noise 刷新羊群或 Time 切换季节 → Rendering 显示纸张与新内容。
+- **羊变云：** User input 累计长按并松手 → Noise 检查阈值、移除羊并生成云 → Noise 推进升空和漂浮 → Rendering 画羊毛到云的连续变化。
+- **拖云：** User input 更新拖动坐标 → 松开后 Noise 继续风场 → Rendering 显示位置变化。
+- **音乐追逐：** User input 点击播放 → Audio 改变播放状态 → Noise/Flock 更新随机个体的轨迹 → Rendering 画完整四足狼追逐。
+
+模块是职责分工，不是互不调用的三个独立程序。各成员应理解接口，自己维护本机制的设计与修改。实际成员姓名、每人至少三次有意义的提交和最终署名须由团队按真实工作记录补齐，不能用拆文件代替贡献。

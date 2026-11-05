@@ -1,8 +1,3 @@
-/* TIME-BASED — member owner: fill in real name.
- * Organised with ChatGPT/Codex assistance. See README and docs/OWNERSHIP.md. */
-
-
-// ── mechanics/time/time-mechanic.js ──
 /* TIME mechanic (student owner: fill in your name).
  * ChatGPT-assisted: elapsed seconds drive transitions, timed day/night cycles,
  * seasonal snow and page animation. Delta time keeps timing frame-rate independent.

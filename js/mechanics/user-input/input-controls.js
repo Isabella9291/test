@@ -1,31 +1,13 @@
-/* USER INPUT — member owner: fill in real name.
- * Organised with ChatGPT/Codex assistance. See README and docs/OWNERSHIP.md. */
-
-
-// ── mechanics/user-input/hit-testing.js ──
-/* USER INPUT: pointer hit testing. ChatGPT-assisted. Owner: user-input member. */
-Object.assign(Flock, {
-  hit(x, y) {
-    return [...this.sheep].sort((a, b) => b.y - a.y).find(s => s.growth > .5 && dist(x, y, s.x, s.y - 8) < 26 * s.size);
-  }
-});
-Object.assign(NoiseMechanic, {
-  hit(x, y) { return [...this.clouds].reverse().find(c => dist(x, y, c.x, c.y) < 42 * c.size); }
-});
-
-
-// ── mechanics/user-input/input-controls.js ──
 /* USER INPUT mechanic (student owner: fill in your name).
  * ChatGPT-assisted hit testing and gesture state: click, hold, cloud drag and
  * empty-meadow time scrubbing are mutually exclusive. Mouse and touch share it.
  * Source: https://p5js.org/reference/p5/mousePressed/ */
 window.Input = {
-  desktopPoint: {x:720,y:500}, point: { x: 720, y: 500 }, held: null, dragCloud: null, lightDrag: null,
+  point: { x: 720, y: 500 }, held: null, dragCloud: null, lightDrag: null,
   hoverSheep: null, activePointer: false,
   announce(message) { document.getElementById('announcement').textContent = message; },
   cancel() { this.held = null; this.dragCloud = null; this.lightDrag = null; this.activePointer = false; },
   move(x, y) {
-    this.desktopPoint={x,y};
     const page=Book.toPage(x,y); x=page.x; y=page.y;
     this.point = { x, y };
     if (this.dragCloud) {
@@ -41,8 +23,8 @@ window.Input = {
   },
   press(x, y) {
     this.move(x, y);
-    const cassette=CassetteGeometry.action(x,y);
-    if(cassette){cassette==='play'?MusicBox.toggle():MusicBox.next();return;}
+    if (x >= 65 && x <= 162 && y >= 192 && y <= 253) { MusicBox.toggle(); return; }
+    if (x > 162 && x < 226 && y >= 192 && y < 253) { MusicBox.next(); return; }
     x=this.point.x; y=this.point.y;
     if (!Story.open) {
       if (x > 720 && x < 1250 && y > 166 && y < 810) TimeMechanic.open();
@@ -90,17 +72,8 @@ window.Input = {
     const p = this.point;
     const onClasp = !Story.open && p.x > 720 && p.x < 1250 && p.y > 166 && p.y < 810;
     const corner = Story.open && p.y > 753 && p.y < 815 && ((p.x > 240 && p.x < 338) || (p.x > 1140 && p.x < 1230));
-    const onRecord = CassetteGeometry.action(this.desktopPoint.x,this.desktopPoint.y);
+    const onRecord = p.x > 65 && p.x < 226 && p.y > 192 && p.y < 253;
     cursor(this.dragCloud ? 'grabbing' : (this.hoverSheep || onClasp || corner || onRecord || (Story.open && SceneGeometry.musicHit(p.x,p.y)) || NoiseMechanic.hit(p.x, p.y)) ? 'pointer' : 'default');
-  },
-  layoutCassetteControls(){
-    const bounds=document.querySelector('#stage canvas').getBoundingClientRect();
-    const k=bounds.width/Book.W;
-    for(const[name,box]of Object.entries(CassetteGeometry.controls)){
-      const p=CassetteGeometry.toScreen(box.x,box.y),el=document.getElementById(name==='play'?'music-button':'track-button');
-      el.style.left=(bounds.left+p.x*k)+'px';el.style.top=(bounds.top+p.y*k)+'px';
-      el.style.width=(box.w*CassetteGeometry.scale*k)+'px';el.style.height=(box.h*CassetteGeometry.scale*k)+'px';el.style.fontSize=(22*CassetteGeometry.scale*k)+'px';
-    }
   },
   bind() {
     const on = (id, fn) => document.getElementById(id).addEventListener('click', fn);
@@ -111,7 +84,6 @@ window.Input = {
     on('music-button', () => MusicBox.toggle());
     on('track-button', () => MusicBox.next());
     on('help-button', () => this.help());
-    this.layoutCassetteControls();
     window.addEventListener('blur', () => this.cancel());
     window.addEventListener('pointercancel', () => this.cancel());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.cancel(); });
@@ -121,33 +93,3 @@ window.Input = {
     document.getElementById('help-button').setAttribute('aria-expanded', String(!panel.hidden));
   }
 };
-
-
-// ── mechanics/user-input/p5-events.js ──
-/* USER INPUT: p5 mouse, touch and keyboard callbacks. ChatGPT-assisted.
- * Converts canvas coordinates, then delegates gestures to Input. */
-function mouseMoved() { Input.move(mouseX / sceneScale, mouseY / sceneScale); }
-function mouseDragged() { Input.move(mouseX / sceneScale, mouseY / sceneScale); return false; }
-function mousePressed(event) {
-  if (event?.target?.tagName !== 'CANVAS') return;
-  Input.press(mouseX / sceneScale, mouseY / sceneScale); return false;
-}
-function mouseReleased() { Input.release(); }
-function touchStarted(event) {
-  if (event?.target?.tagName !== 'CANVAS') return;
-  const t = touches[0]; if (t) Input.press(t.x / sceneScale, t.y / sceneScale); return false;
-}
-function touchMoved() { const t = touches[0]; if (t) Input.move(t.x / sceneScale, t.y / sceneScale); return false; }
-function touchEnded() { Input.release(); return false; }
-function keyPressed(event) {
-  if (event?.target?.tagName === 'BUTTON') return;
-  if (keyCode === ENTER) TimeMechanic.open();
-  else if (keyCode === LEFT_ARROW) TimeMechanic.turn('flock');
-  else if (keyCode === RIGHT_ARROW) TimeMechanic.turn('season');
-  else if (key.toLowerCase() === 'n') TimeMechanic.toggleNight();
-  else if (key.toLowerCase() === 'm') MusicBox.toggle();
-  else if (key.toLowerCase() === 't') MusicBox.next();
-  else if (key.toLowerCase() === 'h') Input.help();
-  else return;
-  return false;
-}

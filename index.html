@@ -15,12 +15,10 @@
     <button id="flock-button" hidden>← 新的羊群</button>
     <button id="season-button" hidden>下一季节 →</button>
     <button id="night-button" hidden>昼 / 夜</button>
+    <button id="music-button">♫ 播放</button>
+    <button id="track-button" title="切换下一首原创旋律">换曲</button>
     <button id="help-button" aria-expanded="false">操作说明 ?</button>
   </nav>
-  <div id="cassette-controls" aria-label="录音带播放控制">
-    <button id="music-button" aria-label="播放音乐" title="播放 / 暂停（M）">▷</button>
-    <button id="track-button" aria-label="下一首" title="下一首（T）">›</button>
-  </div>
   <aside id="help" hidden>
     <h1>The Sheep <span>一本会呼吸的故事书</span></h1>
     <p>点书扣打开 · 左下页角刷新羊群 · 右下页角切换四季</p>
@@ -32,12 +30,21 @@
   </aside>
   <div id="announcement" role="status" aria-live="polite"></div>
   <script src="vendor/p5.min.js"></script>
-  <script src="settings.js"></script>
-  <script src="noise-random.js"></script>
-  <script src="time-based.js"></script>
-  <script src="renderer.js"></script>
-  <script src="user-input.js"></script>
-  <script src="music.js"></script>
-  <script src="sketch.js"></script>
+  <script src="js/shared/config.js"></script>
+  <script src="js/shared/state.js"></script>
+  <script src="js/shared/scene-geometry.js"></script>
+  <script src="js/rendering/book-scene.js"></script>
+  <script src="js/rendering/painted-desk.js"></script>
+  <script src="js/rendering/wool-painter.js"></script>
+  <script src="js/mechanics/noise-random/flock-model.js"></script>
+  <script src="js/mechanics/noise-random/perlin-mechanic.js"></script>
+  <script src="js/rendering/flock-renderer.js"></script>
+  <script src="js/rendering/cloud-renderer.js"></script>
+  <script src="js/mechanics/time/time-mechanic.js"></script>
+  <script src="js/mechanics/user-input/hit-testing.js"></script>
+  <script src="js/mechanics/user-input/input-controls.js"></script>
+  <script src="js/mechanics/user-input/p5-events.js"></script>
+  <script src="js/audio/music-box.js"></script>
+  <script src="js/sketch.js"></script>
 </body>
 </html>

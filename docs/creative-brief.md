@@ -6,5 +6,5 @@
 - 点击空白草地添羊；长按膨胀，松手原羊消失并连续化云升空；云可拖，继续噪声漂移，随机降雨生羊并同步消散。
 - 随机一部分羊拥有狼影；没有悬停抬头或拟人举手。白天播放音乐后出现完整四足狼追逐，暂停后收回影子。
 - 影子跟随 360° 鼠标光源，但有缓动和转速上限。四季翻页循环，昼夜自动循环并允许拖动调节。
-- 三种机制分别归入根目录 time-based.js、noise-random.js、user-input.js，职责见 OWNERSHIP.md；renderer.js、music.js、settings.js 与 sketch.js 共同维护。
+- 三种机制分别为 Time、Perlin noise and randomness、User input，职责见 OWNERSHIP.md；绘制、音频和公共配置共同维护。
 - 此前整理版已更新 GitHub；本轮新构图仅更新工作区与单文件预览，不自动推送。
