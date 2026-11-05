@@ -14,19 +14,36 @@ const { chromium } = require('playwright');
     await page.goto(process.env.BASE_URL || 'http://127.0.0.1:8000/?seed=1927');
     await page.waitForFunction(() => window.Story && document.getElementById('loading').hidden);
     assert.equal(await page.evaluate(() => Story.open), false);
-    await page.mouse.click(713, 487); // Actual brass clasp, rather than an internal setter.
-    await page.waitForFunction(() => Story.opening === 1);
+    await page.mouse.click(1223, 506); // Actual brass clasp, rather than an internal setter.
+    await page.waitForFunction(() => Story.opening === 1 && Story.reveal === 1);
+    const mouse={
+      click:async(x,y)=>{const p=await page.evaluate(p=>Book.toScreen(p.x,p.y),{x,y});return page.mouse.click(p.x,p.y);},
+      move:async(x,y,options)=>{const p=await page.evaluate(p=>Book.toScreen(p.x,p.y),{x,y});return page.mouse.move(p.x,p.y,options);}
+    };
     const initial = await page.evaluate(() => Flock.sheep.map(s => ({ id: s.id, x: s.x, y: s.y, size: s.size, wolf: s.wolf })));
     assert(initial.length >= 18 && initial.length <= 26);
     assert(initial.some(s => s.wolf) && initial.some(s => !s.wolf));
     report.push('clasp opens; varied flock and wolf shadows generated');
 
+    const free = await page.evaluate(() => {
+      for (let y = 445; y < 730; y += 30) for (let x = 310; x < 1140; x += 30) {
+        if (abs(x - 720) > 30 && !Book.isRiver(x,y,20) && !NoiseMechanic.hit(x,y) && Flock.sheep.every(s => dist(x,y,s.x,s.y) > (s.size + 1.2) * 25)) return {x,y};
+      }
+    });
+    assert(free, 'There is a free patch of grass');
+    await mouse.click(free.x, free.y);
+    assert.equal(await page.evaluate(() => Flock.sheep.length), initial.length + 1);
+    assert(await page.evaluate(p => Flock.sheep.some(s => dist(s.x,s.y,p.x,p.y) < 3), free));
+    await mouse.click(600, await page.evaluate(() => 185 + Book.riverY((600-235)/998*1000)*635/500));
+    assert.equal(await page.evaluate(() => Flock.sheep.length), initial.length + 1);
+    report.push('empty grass click creates a sheep at the pointer; river clicks do not');
+
     const sheep = initial[5];
     let clouds = await page.evaluate(() => NoiseMechanic.clouds.length);
-    await page.mouse.click(sheep.x, sheep.y - 8);
+    await mouse.click(sheep.x, sheep.y - 8);
     assert.equal(await page.evaluate(() => NoiseMechanic.clouds.length), clouds);
     assert(await page.evaluate(id => Flock.sheep.some(s => s.id === id), sheep.id));
-    await page.mouse.move(sheep.x, sheep.y - 8); await page.mouse.down();
+    await mouse.move(sheep.x, sheep.y - 8); await page.mouse.down();
     await page.waitForFunction(() => Input.held?.duration > .75);
     await page.mouse.up();
     assert.equal(await page.evaluate(() => NoiseMechanic.clouds.length), clouds + 1);
@@ -35,8 +52,8 @@ const { chromium } = require('playwright');
 
     await page.waitForTimeout(200);
     let c = await page.evaluate(() => { const c = NoiseMechanic.clouds.at(-1); return { x: c.x, y: c.y }; });
-    await page.mouse.move(c.x, c.y); await page.mouse.down();
-    await page.mouse.move(900, 345, { steps: 10 });
+    await mouse.move(c.x, c.y); await page.mouse.down();
+    await mouse.move(900, 345, { steps: 10 });
     assert(await page.evaluate(() => Input.dragCloud !== null));
     await page.mouse.up();
     const afterDrag = await page.evaluate(() => { const c = NoiseMechanic.clouds.at(-1); return { x: c.x, y: c.y }; });
@@ -63,11 +80,11 @@ const { chromium } = require('playwright');
     report.push('random rainy cloud grows a new sheep in sync with its disappearance');
 
     const oldIds = await page.evaluate(() => Flock.sheep.map(s => s.id));
-    await page.mouse.click(275, 780);
+    await mouse.click(275, 780);
     await page.waitForFunction(() => Story.turn === 0 && Story.page === 1);
     assert(await page.evaluate(ids => Flock.sheep.every(s => !ids.includes(s.id)), oldIds));
     for (let season = 1; season <= 4; season++) {
-      await page.mouse.click(1197, 780);
+      await mouse.click(1197, 780);
       await page.waitForFunction(expected => Story.turn === 0 && Story.season === expected, season % 4);
     }
     report.push('left page refreshes flock; right page cycles all four seasons');

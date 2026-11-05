@@ -1,4 +1,4 @@
-/* Gramophone: three fixed ORIGINAL note sequences synthesized with Web Audio.
+/* Shared audio service (not a fourth mechanic): three fixed ORIGINAL note sequences synthesized with Web Audio.
  * ChatGPT-assisted code and melodies. No recordings or external music assets.
  * Music is only a behaviour switch, never an audio-analysis mechanic.
  * API/envelope reference: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API */

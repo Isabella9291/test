@@ -21,11 +21,11 @@ window.NoiseMechanic = {
     this.ambientCloud(443, 322); this.ambientCloud(1004, 337);
   },
   ambientCloud(x, y) { this.addCloud(x, y + 75, .85, true); },
-  addCloud(x, y, size = 1, ambient = false) {
-    if (this.clouds.length >= 14) return;
+  addCloud(x, y, size = 1, ambient = false, source = null) {
+    if (this.clouds.length >= ProjectConfig.noise.maxClouds) return;
     this.clouds.push({
-      x, y: y - 16, groundY: constrain(y + this.range(-15, 30), 408, 700),
-      startY: y - 16, targetY: max(311, y - this.range(110, 160)),
+      x, y, groundY: constrain(y + this.range(-15, 30), 408, 700),
+      startY: y, sourceVariant: source?.woolVariant ?? floor(this.range(0,8)), sourcePuff: source?.puff ?? 0, fromSheep: !!source, targetY: max(235, y - this.range(140, 210)),
       size, age: 0, life: this.range(16, 25), rain: this.rand() < .38,
       seed: this.range(0, 900), newborn: null, burst: false, ambient,
       tufts: Array.from({ length: 11 }, () => ({ x: this.range(-30, 30), y: this.range(-10, 10), r: this.range(15, 27) }))
@@ -37,15 +37,15 @@ window.NoiseMechanic = {
       if (Input.dragCloud !== c) {
         // Two independent continuous noise samples prevent straight-line drift.
         c.x += (noise(c.seed, Story.elapsed * .065) - .48) * dt * 32;
-        if (c.age < 4) {
-          c.y = lerp(c.startY, c.targetY, 1 - (1 - min(1, c.age / 4)) ** 3);
+        if (c.age < ProjectConfig.noise.cloudRiseSeconds) {
+          const t=min(1,c.age/ProjectConfig.noise.cloudRiseSeconds); c.y = lerp(c.startY, c.targetY, t*t*(3-2*t));
         } else c.y += (noise(c.seed + 160, Story.elapsed * .075) - .5) * dt * 9;
       }
-      c.x = constrain(c.x, 290, 1161); c.y = constrain(c.y, 292, 678);
+      c.x = constrain(c.x, 290, 1161); c.y = constrain(c.y, 235, c.fromSheep ? max(678,c.startY) : 678);
       const progress = constrain((c.age - (c.life - 4)) / 4, 0, 1);
       if (progress > 0 && c.rain && !c.newborn) {
         const size = this.range(.75, 1.12);
-        const p = Flock.sheep.length < 45 ? Flock.findSpace(size, { x: c.x, y: c.groundY }) : null;
+        const p = Flock.sheep.length < ProjectConfig.noise.maxSheep ? Flock.findSpace(size, { x: c.x, y: c.groundY }) : null;
         if (p) {
           c.newborn = Flock.create(p.x, p.y, size, true); c.newborn.rainBorn = true;
           Flock.sheep.push(c.newborn);
@@ -70,39 +70,10 @@ window.NoiseMechanic = {
     this.particles = this.particles.filter(p => p.age < p.life);
     if (Input.dragCloud && !this.clouds.includes(Input.dragCloud)) Input.dragCloud = null;
   },
-  hit(x, y) { return [...this.clouds].reverse().find(c => dist(x, y, c.x, c.y) < 42 * c.size); },
-  drawClouds(front) {
-    noStroke();
-    for (const c of this.clouds) {
-      const progress = constrain((c.age - (c.life - 4)) / 4, 0, 1);
-      if (!front && c.rain && c.newborn && progress > 0) {
-        // Rain is bounded by its cloud and the place where its sheep is growing.
-        stroke(185, 212, 207, 140 * (1 - progress)); strokeWeight(1);
-        for (let i = 0; i < 23; i++) {
-          const f = (i / 23 + Story.elapsed * .9) % 1;
-          const x = lerp(c.x, c.newborn.x, f) + sin(i * 9) * 17;
-          const y = lerp(c.y + 6, c.newborn.y, f);
-          line(x, y, x - 1, y + 6);
-        }
-        noStroke();
-      }
-      if (!front) continue;
-      push(); translate(c.x, c.y); scale(c.size);
-      const opacity = (1 - progress) * min(1, c.age * 1.4) * (c.ambient ? .8 : 1);
-      fill(35, 48, 40, opacity * 12); ellipse(7, 21, 76, 20);
-      for (let i = 0; i < c.tufts.length; i++) {
-        const t = c.tufts[i]; fill(lerpColor(color('#f2edda'), color('#a5bbc6'), Story.night * .7));
-        const col = lerpColor(color('#f4efdc'), color('#a5bbc6'), Story.night * .7); col.setAlpha(opacity * 205);
-        fill(col); ellipse(t.x, t.y, t.r * 1.5, t.r);
-        fill(255, 251, 227, opacity * 42); ellipse(t.x - 2, t.y - 4, t.r, t.r * .5);
-      }
-      pop();
-    }
-    if (!front) return;
-    for (const p of this.particles) {
-      const alpha = (1 - p.age / p.life) * 210;
-      fill(245, 231, 175, alpha); circle(p.x, p.y, p.size);
-      if (p.size > 2.5) { stroke(249, 237, 195, alpha * .8); strokeWeight(.7); line(p.x - 3, p.y, p.x + 3, p.y); line(p.x, p.y - 3, p.x, p.y + 3); noStroke(); }
-    }
+  releaseSheep(sheep, heldSeconds) {
+    if (heldSeconds < ProjectConfig.input.holdToCloudSeconds || this.clouds.length >= ProjectConfig.noise.maxClouds || !Flock.sheep.includes(sheep)) return false;
+    Flock.sheep = Flock.sheep.filter(s => s !== sheep);
+    this.addCloud(sheep.x, sheep.y - 12, sheep.size, false, sheep);
+    return true;
   }
 };

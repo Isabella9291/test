@@ -12,7 +12,7 @@ function setup() {
   const canvas = createCanvas(...dimensions); canvas.parent('stage');
   canvas.attribute('aria-label', 'The Sheep：桌面上的互动童话书。可使用页面按钮或键盘操作。');
   textFont('Georgia, serif'); frameRate(40);
-  Book.init();
+  Book.init(); WoolPainter.init();
   const seed = new URLSearchParams(location.search).get('seed');
   NoiseMechanic.seed = seed !== null && /^\d+$/.test(seed) ? Number(seed) >>> 0 : Date.now() >>> 0;
   NoiseMechanic.newFlock(); Input.bind();
@@ -25,37 +25,12 @@ function draw() {
   if (Story.open) { NoiseMechanic.update(dt); Flock.update(dt); }
   background('#241a13'); push(); scale(sceneScale);
   Book.backdrop();
+  push(); translate(720,500); scale(Book.viewScale); translate(-720,-500);
   if (Story.open) {
     if (Story.opening < 1) {
-      push(); translate(720, 208); scale(1, .25 + .75 * sin(Story.opening * HALF_PI)); translate(-720, -208);
-      Book.openBook(); pop(); Book.cover(Story.opening);
+      Book.openingFrame();
     } else { Book.openBook(); Book.pageTurn(); }
   } else Book.cover();
-  Book.finish(); pop();
+  pop(); Book.finish(); pop();
 }
 function windowResized() { const dimensions = fitScene(); resizeCanvas(...dimensions); Input.cancel(); }
-function mouseMoved() { Input.move(mouseX / sceneScale, mouseY / sceneScale); }
-function mouseDragged() { Input.move(mouseX / sceneScale, mouseY / sceneScale); return false; }
-function mousePressed(event) {
-  if (event?.target?.tagName !== 'CANVAS') return;
-  Input.press(mouseX / sceneScale, mouseY / sceneScale); return false;
-}
-function mouseReleased() { Input.release(); }
-function touchStarted(event) {
-  if (event?.target?.tagName !== 'CANVAS') return;
-  const t = touches[0]; if (t) Input.press(t.x / sceneScale, t.y / sceneScale); return false;
-}
-function touchMoved() { const t = touches[0]; if (t) Input.move(t.x / sceneScale, t.y / sceneScale); return false; }
-function touchEnded() { Input.release(); return false; }
-function keyPressed(event) {
-  if (event?.target?.tagName === 'BUTTON') return;
-  if (keyCode === ENTER) TimeMechanic.open();
-  else if (keyCode === LEFT_ARROW) TimeMechanic.turn('flock');
-  else if (keyCode === RIGHT_ARROW) TimeMechanic.turn('season');
-  else if (key.toLowerCase() === 'n') TimeMechanic.toggleNight();
-  else if (key.toLowerCase() === 'm') MusicBox.toggle();
-  else if (key.toLowerCase() === 't') MusicBox.next();
-  else if (key.toLowerCase() === 'h') Input.help();
-  else return;
-  return false;
-}
