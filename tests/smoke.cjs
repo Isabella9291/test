@@ -23,20 +23,21 @@ const { chromium } = require('playwright');
     const initial = await page.evaluate(() => Flock.sheep.map(s => ({ id: s.id, x: s.x, y: s.y, size: s.size, wolf: s.wolf })));
     assert(initial.length >= 18 && initial.length <= 26);
     assert(initial.some(s => s.wolf) && initial.some(s => !s.wolf));
-    report.push('clasp opens; varied flock and wolf shadows generated');
+    assert(await page.evaluate(() => Flock.sheep.every(s => !SceneGeometry.isBlocked(s.x,s.y,16*s.size))));
+    report.push('clasp opens; varied flock stays on grass and clear of trees and music prop');
 
     const free = await page.evaluate(() => {
-      for (let y = 445; y < 730; y += 30) for (let x = 310; x < 1140; x += 30) {
-        if (abs(x - 720) > 30 && !Book.isRiver(x,y,20) && !NoiseMechanic.hit(x,y) && Flock.sheep.every(s => dist(x,y,s.x,s.y) > (s.size + 1.2) * 25)) return {x,y};
+      for (let y = 475; y < 730; y += 30) for (let x = 310; x < 1140; x += 30) {
+        if (abs(x - 720) > 30 && !SceneGeometry.isBlocked(x,y,20) && !NoiseMechanic.hit(x,y) && Flock.sheep.every(s => dist(x,y,s.x,s.y) > (s.size + 1.2) * 25)) return {x,y};
       }
     });
     assert(free, 'There is a free patch of grass');
     await mouse.click(free.x, free.y);
     assert.equal(await page.evaluate(() => Flock.sheep.length), initial.length + 1);
     assert(await page.evaluate(p => Flock.sheep.some(s => dist(s.x,s.y,p.x,p.y) < 3), free));
-    await mouse.click(600, await page.evaluate(() => 185 + Book.riverY((600-235)/998*1000)*635/500));
+    await mouse.click(600, 300);
     assert.equal(await page.evaluate(() => Flock.sheep.length), initial.length + 1);
-    report.push('empty grass click creates a sheep at the pointer; river clicks do not');
+    report.push('empty grass click creates a sheep at the pointer; sky clicks do not');
 
     const sheep = initial[5];
     let clouds = await page.evaluate(() => NoiseMechanic.clouds.length);
