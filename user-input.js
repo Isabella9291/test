@@ -1,13 +1,30 @@
+/* User input 负责人：填写真实姓名；命中判断、手势、按钮与事件
+ * AI-assisted implementation: ChatGPT/Codex. Ownership and references: README.md. */
+
+// ── Section 1 ──
+/* USER INPUT: pointer hit testing. ChatGPT-assisted. Owner: user-input member. */
+Object.assign(Flock, {
+  hit(x, y) {
+    return [...this.sheep].sort((a, b) => b.y - a.y).find(s => s.growth > .5 && dist(x, y, s.x, s.y - 8) < 26 * s.size);
+  }
+});
+Object.assign(NoiseMechanic, {
+  hit(x, y) { return [...this.clouds].reverse().find(c => dist(x, y, c.x, c.y) < 42 * c.size); }
+});
+
+
+// ── Section 2 ──
 /* USER INPUT mechanic (student owner: fill in your name).
  * ChatGPT-assisted hit testing and gesture state: click, hold, cloud drag and
  * empty-meadow time scrubbing are mutually exclusive. Mouse and touch share it.
  * Source: https://p5js.org/reference/p5/mousePressed/ */
 window.Input = {
-  point: { x: 720, y: 500 }, held: null, dragCloud: null, lightDrag: null,
+  desktopPoint: {x:720,y:500}, point: { x: 720, y: 500 }, held: null, dragCloud: null, lightDrag: null,
   hoverSheep: null, activePointer: false,
   announce(message) { document.getElementById('announcement').textContent = message; },
   cancel() { this.held = null; this.dragCloud = null; this.lightDrag = null; this.activePointer = false; },
   move(x, y) {
+    this.desktopPoint={x,y};
     const page=Book.toPage(x,y); x=page.x; y=page.y;
     this.point = { x, y };
     if (this.dragCloud) {
@@ -23,8 +40,8 @@ window.Input = {
   },
   press(x, y) {
     this.move(x, y);
-    if (x >= 65 && x <= 162 && y >= 192 && y <= 253) { MusicBox.toggle(); return; }
-    if (x > 162 && x < 226 && y >= 192 && y < 253) { MusicBox.next(); return; }
+    const cassette=CassetteGeometry.action(x,y);
+    if(cassette){cassette==='play'?MusicBox.toggle():MusicBox.next();return;}
     x=this.point.x; y=this.point.y;
     if (!Story.open) {
       if (x > 720 && x < 1250 && y > 166 && y < 810) TimeMechanic.open();
@@ -48,7 +65,7 @@ window.Input = {
     }
     if (this.held) {
       const { sheep, duration } = this.held;
-      
+
       if (NoiseMechanic.releaseSheep(sheep, duration)) { this.announce('羊毛变成了一朵云，可以拖动它。'); }
     }
     this.cancel();
@@ -69,11 +86,29 @@ window.Input = {
     if (Story.open && !this.activePointer && Story.night < .8) {
       Story.sun = lerp(Story.sun, map(constrain(this.point.x, 270, 1200), 270, 1200, -.95, .95), min(1, dt * 2));
     }
+    // This mechanic owns mouse-driven light response and held-sheep inflation.
+    for (const s of Flock.sheep) {
+      const targetAngle = atan2(s.y - Input.point.y, s.x - Input.point.x);
+      const difference = atan2(sin(targetAngle - s.shadowAngle), cos(targetAngle - s.shadowAngle));
+      // Angular damping plus a speed limit avoids flipping when the pointer crosses a sheep.
+      if (abs(difference) > .035) s.shadowAngle += constrain(difference * (1 - exp(-dt * 1.25)), -dt * .65, dt * .65);
+      const held = Input.held?.sheep === s;
+      s.puff = lerp(s.puff, held ? min(1, Input.held.duration / 1.0) : 0, min(1, dt * 7));
+    }
     const p = this.point;
     const onClasp = !Story.open && p.x > 720 && p.x < 1250 && p.y > 166 && p.y < 810;
     const corner = Story.open && p.y > 753 && p.y < 815 && ((p.x > 240 && p.x < 338) || (p.x > 1140 && p.x < 1230));
-    const onRecord = p.x > 65 && p.x < 226 && p.y > 192 && p.y < 253;
+    const onRecord = CassetteGeometry.action(this.desktopPoint.x,this.desktopPoint.y);
     cursor(this.dragCloud ? 'grabbing' : (this.hoverSheep || onClasp || corner || onRecord || (Story.open && SceneGeometry.musicHit(p.x,p.y)) || NoiseMechanic.hit(p.x, p.y)) ? 'pointer' : 'default');
+  },
+  layoutCassetteControls(){
+    const bounds=document.querySelector('#stage canvas').getBoundingClientRect();
+    const k=bounds.width/Book.W;
+    for(const[name,box]of Object.entries(CassetteGeometry.controls)){
+      const p=CassetteGeometry.toScreen(box.x,box.y),el=document.getElementById(name==='play'?'music-button':'track-button');
+      el.style.left=(bounds.left+p.x*k)+'px';el.style.top=(bounds.top+p.y*k)+'px';
+      el.style.width=(box.w*CassetteGeometry.scale*k)+'px';el.style.height=(box.h*CassetteGeometry.scale*k)+'px';el.style.fontSize=(22*CassetteGeometry.scale*k)+'px';
+    }
   },
   bind() {
     const on = (id, fn) => document.getElementById(id).addEventListener('click', fn);
@@ -84,6 +119,7 @@ window.Input = {
     on('music-button', () => MusicBox.toggle());
     on('track-button', () => MusicBox.next());
     on('help-button', () => this.help());
+    this.layoutCassetteControls();
     window.addEventListener('blur', () => this.cancel());
     window.addEventListener('pointercancel', () => this.cancel());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.cancel(); });
@@ -93,3 +129,33 @@ window.Input = {
     document.getElementById('help-button').setAttribute('aria-expanded', String(!panel.hidden));
   }
 };
+
+
+// ── Section 3 ──
+/* USER INPUT: p5 mouse, touch and keyboard callbacks. ChatGPT-assisted.
+ * Converts canvas coordinates, then delegates gestures to Input. */
+function mouseMoved() { Input.move(mouseX / sceneScale, mouseY / sceneScale); }
+function mouseDragged() { Input.move(mouseX / sceneScale, mouseY / sceneScale); return false; }
+function mousePressed(event) {
+  if (event?.target?.tagName !== 'CANVAS') return;
+  Input.press(mouseX / sceneScale, mouseY / sceneScale); return false;
+}
+function mouseReleased() { Input.release(); }
+function touchStarted(event) {
+  if (event?.target?.tagName !== 'CANVAS') return;
+  const t = touches[0]; if (t) Input.press(t.x / sceneScale, t.y / sceneScale); return false;
+}
+function touchMoved() { const t = touches[0]; if (t) Input.move(t.x / sceneScale, t.y / sceneScale); return false; }
+function touchEnded() { Input.release(); return false; }
+function keyPressed(event) {
+  if (event?.target?.tagName === 'BUTTON') return;
+  if (keyCode === ENTER) TimeMechanic.open();
+  else if (keyCode === LEFT_ARROW) TimeMechanic.turn('flock');
+  else if (keyCode === RIGHT_ARROW) TimeMechanic.turn('season');
+  else if (key.toLowerCase() === 'n') TimeMechanic.toggleNight();
+  else if (key.toLowerCase() === 'm') MusicBox.toggle();
+  else if (key.toLowerCase() === 't') MusicBox.next();
+  else if (key.toLowerCase() === 'h') Input.help();
+  else return;
+  return false;
+}

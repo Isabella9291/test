@@ -1,3 +1,7 @@
+/* 公共音频服务：三段固定旋律；不是第四种 Audio mechanic
+ * AI-assisted implementation: ChatGPT/Codex. Ownership and references: README.md. */
+
+// ── Section 1 ──
 /* Shared audio service (not a fourth mechanic): three fixed ORIGINAL note sequences synthesized with Web Audio.
  * ChatGPT-assisted code and melodies. No recordings or external music assets.
  * Music is only a behaviour switch, never an audio-analysis mechanic.
@@ -34,7 +38,7 @@ window.MusicBox = {
     Input.announce('曲目：' + this.songs[this.track].name);
     document.getElementById('track-button').title = this.songs[this.track].name;
   },
-  label() { document.getElementById('music-button').textContent = this.playing ? 'Ⅱ 暂停' : '♫ 播放'; },
+  label() { const el=document.getElementById('music-button');el.textContent=this.playing?'Ⅱ':'▷';el.setAttribute('aria-label',this.playing?'暂停音乐':'播放音乐'); },
   note(midi, at, duration, volume, type = 'sine') {
     const osc = this.ctx.createOscillator(), envelope = this.ctx.createGain();
     osc.type = type; osc.frequency.value = 440 * 2 ** ((midi - 69) / 12);

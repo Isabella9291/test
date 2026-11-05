@@ -3,3 +3,6 @@ test-results/
 playwright-report/
 .DS_Store
 __pycache__/
+
+# Local convenience preview; the submitted project starts at index.html.
+preview.html

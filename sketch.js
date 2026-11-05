@@ -1,3 +1,7 @@
+/* p5.js 主程序：setup、draw、窗口缩放与模块整合
+ * AI-assisted implementation: ChatGPT/Codex. Ownership and references: README.md. */
+
+// ── Section 1 ──
 /* Integration only: each mechanic lives in its own script.
  * Project code created with ChatGPT assistance; see README for scope and sources.
  * p5.js global mode reference: https://p5js.org/ */
@@ -12,6 +16,7 @@ function setup() {
   const canvas = createCanvas(...dimensions); canvas.parent('stage');
   canvas.attribute('aria-label', 'The Sheep：桌面上的互动童话书。可使用页面按钮或键盘操作。');
   textFont('Georgia, serif'); frameRate(40);
+  document.fonts.load('112px StorybookScript').catch(()=>{});
   Book.init(); WoolPainter.init();
   const seed = new URLSearchParams(location.search).get('seed');
   NoiseMechanic.seed = seed !== null && /^\d+$/.test(seed) ? Number(seed) >>> 0 : Date.now() >>> 0;
@@ -33,4 +38,4 @@ function draw() {
   } else Book.cover();
   pop(); Book.finish(); pop();
 }
-function windowResized() { const dimensions = fitScene(); resizeCanvas(...dimensions); Input.cancel(); }
+function windowResized() { const dimensions = fitScene(); resizeCanvas(...dimensions); Input.cancel(); Input.layoutCassetteControls(); }

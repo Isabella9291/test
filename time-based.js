@@ -1,3 +1,7 @@
+/* Time-based 负责人：填写真实姓名；全局时间与过渡
+ * AI-assisted implementation: ChatGPT/Codex. Ownership and references: README.md. */
+
+// ── Section 1 ──
 /* TIME mechanic (student owner: fill in your name).
  * ChatGPT-assisted: elapsed seconds drive transitions, timed day/night cycles,
  * seasonal snow and page animation. Delta time keeps timing frame-rate independent.
